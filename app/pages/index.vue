@@ -1,44 +1,21 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue';
-import type { AutocompletePlace } from '~/types/AutocompletePlace';
+import { z } from 'zod'
+import type { FormSubmitEvent } from '@nuxt/ui'
 
-const { data: businesses, refresh: refreshBusinesses } = useFetch<Business[]>('/api/businesses');
-const toast = useToast();
+const { data: businesses } = useFetch<Business[]>('/api/businesses');
 
-const placeId = ref<string | null>(null);
+const schema = z.object({
+  placeId: z.string().min(1, 'Business Location is required'),
+  category: z.string(),
+});
+type Schema = z.output<typeof schema>
+
+const state = reactive<Partial<Schema>>({
+  placeId: undefined,
+  category: undefined,
+});
+
 const selectedPlaceDetails = ref<AutocompletePlace | null>(null);
-const categoryOptions = ["Cafe", "Restaurant", "Takeaway", "Bar", "Bakery", "Other"];
-const selectedCategory = ref<string | null>(null);
-
-async function submitBusiness() {
-  if (!placeId.value) {
-    toast.add({ title: 'Error', description: 'Please select a business location.', color: 'red', icon: 'i-heroicons-exclamation-circle' });
-    return;
-  }
-  if (!selectedCategory.value) {
-    toast.add({ title: 'Error', description: 'Please select a category.', color: 'red', icon: 'i-heroicons-exclamation-circle' });
-    return;
-  }
-
-  try {
-    await $fetch('/api/businesses', {
-      method: 'POST',
-      body: {
-        placeId: placeId.value,
-        // Ensure the field sent to the API is 'category'
-        category: selectedCategory.value, 
-      },
-    });
-
-    toast.add({ title: 'Success!', description: 'Business added successfully. Redirecting...', color: 'green', icon: 'i-heroicons-check-circle' });
-    await refreshBusinesses(); // Refresh the business list
-    navigateTo('/setup/social-media-and-website');
-  } catch (error: any) {
-    console.error('Error submitting business:', error);
-    const errorMessage = error.data?.message || error.message || 'Failed to add business. Please try again.';
-    toast.add({ title: 'Submission Error', description: errorMessage, color: 'red', icon: 'i-heroicons-exclamation-triangle' });
-  }
-}
 
 function handlePlaceDetailsUpdate(placeDetails: AutocompletePlace | null) {
   selectedPlaceDetails.value = placeDetails;
@@ -49,27 +26,22 @@ watch(selectedPlaceDetails, (newPlace) => {
   if (newPlace && newPlace.types) {
     const types = newPlace.types;
     if (types.includes('cafe')) {
-      selectedCategory.value = "Cafe";
+      state.category = "Cafe";
     } else if (types.includes('restaurant')) {
-      selectedCategory.value = "Restaurant";
+      state.category = "Restaurant";
     } else if (types.includes('meal_takeaway')) { // Google often uses 'meal_takeaway'
-      selectedCategory.value = "Takeaway";
+      state.category = "Takeaway";
     } else if (types.includes('bar')) {
-      selectedCategory.value = "Bar";
+      state.category = "Bar";
     } else if (types.includes('bakery')) {
-      selectedCategory.value = "Bakery";
+      state.category = "Bakery";
     }
-    // User can still manually override this selection
   }
 });
 
-// Helper type for Business (if not already globally defined)
-// This should match the structure of your Business data from the API
-interface Business {
-  id: number;
-  name: string;
-  // Add other properties like 'category' if they are part of the Business type
-  // category?: string; 
+const router = useRouter();
+async function onSubmit(event: FormSubmitEvent<Schema>) {
+  router.push(`/setup/social-media-and-website?placeId=${event.data.placeId}&category=${event.data.category}`);
 }
 </script>
  
@@ -85,28 +57,24 @@ interface Business {
           Add your business to get a detailed visibility report and actionable insights for improvement.
         </p>
         
-        <form class="flex flex-col gap-4" @submit.prevent="submitBusiness">
-          <UFormGroup label="Business Location" name="placeId" required>
+        <UForm :schema="schema" :state="state" class="flex flex-col gap-4" @submit="onSubmit">
+          <UFormField label="Business" name="placeId">
             <GooglePlaceInput 
               class="w-full"
-              v-model="placeId" 
+              v-model="state.placeId" 
               @update:place-details="handlePlaceDetailsUpdate"
+              placeholder="Search for your business"
             />
-          </UFormGroup>
+          </UFormField>
           
-          <UFormGroup label="Category" name="category" required>
-            <USelectMenu 
-              v-model="selectedCategory" 
-              :options="categoryOptions"
-              placeholder="Select a category"
-              class="w-full"
-            />
-          </UFormGroup>
+          <UFormField label="Category" name="category">
+            <CategorySelect v-model="state.category" class="w-full" />
+          </UFormField>
 
-          <UButton type="submit" color="primary" size="lg" block :disabled="!placeId || !selectedCategory">
-            Start Analysis
+          <UButton type="submit" color="primary" size="xl" block :disabled="!state.placeId || !state.category">
+            Go
           </UButton>
-        </form>
+        </UForm>
       </UCard>
 
       <UCard v-if="businesses && businesses.length" class="mt-8">

@@ -7,6 +7,7 @@ import type { FormSubmitEvent } from '@nuxt/ui'
 const router = useRouter();
 const route = useRoute();
 const placeId = computed(() => route.query.placeId as string | undefined);
+const category = computed(() => route.query.category as string | undefined);
 
 const { data: place } = await useFetch(`/api/google/places/getPlace?id=${placeId.value}`);
 if (!place.value || !place.value[0]) {
@@ -602,6 +603,7 @@ const onSubmit = async (event: FormSubmitEvent<FormSchema>) => {
     body: {
       name: name.value,
       placeId: placeId.value,
+      category: category.value,
       websiteUrl: event.data.websiteUrl,
       instagramUsername: event.data.instagramUsername,
       facebookUsername: event.data.facebookUsername,

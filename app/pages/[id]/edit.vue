@@ -17,35 +17,24 @@ if (!business.value) {
 const schema = z.object({
   name: z.string().min(1, 'Name is required'),
   placeId: z.string().min(1, 'Place ID is required').nullable(),
-  category: z.string().nullable(), // Added category to schema
+  category: z.string(),
 });
 type Schema = z.infer<typeof schema>
 
 const state = reactive<Partial<Schema>>({
   name: business.value.name,
   placeId: business.value.placeId,
-  category: business.value.category, // Added category to state
+  category: business.value.category,
 });
-
-const categoryOptions = ["Cafe", "Restaurant", "Takeaway", "Bar", "Bakery", "Other"];
-
-const toast = useToast(); // Added for toast notifications
 
 async function onSubmit(event: FormSubmitEvent<Schema>) {
   try {
-    const updatedBusiness = await $fetch(`/api/businesses/${id}`, {
+    await $fetch(`/api/businesses/${id}`, {
       method: 'PUT',
-      body: event.data, // event.data contains the validated form state
+      body: event.data,
     });
-    toast.add({ title: 'Business updated successfully!', color: 'green', icon: 'i-heroicons-check-circle' });
-    navigateTo(`/${id}`); // Navigate to the business view page
+    navigateTo(`/${id}`);
   } catch (error: any) {
-    toast.add({ 
-      title: 'Error updating business', 
-      description: error.data?.message || error.message || 'An unexpected error occurred.', 
-      color: 'red', 
-      icon: 'i-heroicons-exclamation-triangle' 
-    });
     console.error('Error updating business:', error);
   }
 }
@@ -80,26 +69,20 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
       </template>
 
       <UForm :schema="schema" :state="state" @submit="onSubmit" class="space-y-6">
-        <UFormGroup label="Business Name" name="name" required>
-          <UInput v-model="state.name" size="xl" />
-        </UFormGroup>
+        <UFormField label="Business Name" name="name" size="xl">
+          <UInput v-model="state.name" class="w-full" />
+        </UFormField>
 
-        <UFormGroup label="Google Business Profile" name="placeId">
+        <UFormField label="Google Business Profile" name="placeId" size="xl">
           <GooglePlaceInput v-model="state.placeId" class="w-full" />
-        </UFormGroup>
+        </UFormField>
 
-        <UFormGroup label="Category" name="category" required>
-          <USelectMenu 
-            v-model="state.category" 
-            :options="categoryOptions" 
-            class="w-full" 
-            placeholder="Select a category"
-            size="xl"
-          />
-        </UFormGroup>
+        <UFormField label="Category" name="category" size="xl">
+          <CategorySelect v-model="state.category" class="w-full" />
+        </UFormField>
         
         <div class="flex justify-end gap-3">
-          <UButton label="Cancel" color="gray" variant="ghost" :to="`/${id}`" />
+          <UButton label="Cancel" color="neutral" variant="ghost" :to="`/${id}`" />
           <UButton type="submit" label="Save Changes" color="primary" />
         </div>
       </UForm>

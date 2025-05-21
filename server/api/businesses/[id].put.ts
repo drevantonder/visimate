@@ -1,8 +1,5 @@
 import { defineEventHandler, readValidatedBody } from 'h3';
 import { eq } from 'drizzle-orm';
-import { useDrizzle } from '~/server/utils/drizzle';
-import { tables } from '~/server/database/schema';
-import { businessInsertSchema } from '~/shared/utils/schema'; // This schema might need adjustment for updates (e.g. all fields optional)
 
 export default defineEventHandler(async (event) => {
   const id = event.context.params?.id;
