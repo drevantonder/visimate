@@ -15,6 +15,7 @@ export const businesses = sqliteTable('businesses', {
   doorDashUrl: text('door_dash_url'),
   deliverooUrl: text('deliveroo_url'),
   menulogUrl: text('menulog_url'),
+  category: text('category'),
   createdAt: text('created_at').notNull().default(sql`CURRENT_TIMESTAMP`),
   updatedAt: text('updated_at').notNull().default(sql`CURRENT_TIMESTAMP`),
 });

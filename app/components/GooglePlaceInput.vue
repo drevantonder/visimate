@@ -6,6 +6,7 @@ defineProps<{
 }>()
 
 const modelValue = defineModel<string | null>({ default: null })
+const emit = defineEmits(['update:placeDetails'])
 
 const { googleApiKey } = useRuntimeConfig().public;
 
@@ -60,6 +61,10 @@ watch(initialPlace, (value) => {
 watch(place, (value) => {
   if (value) {
     modelValue.value = value.id
+    emit('update:placeDetails', value)
+  } else {
+    modelValue.value = null
+    emit('update:placeDetails', null)
   }
 })
 

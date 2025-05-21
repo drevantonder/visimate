@@ -1,11 +1,34 @@
 <script setup lang="ts">
 import { z } from 'zod';
-import type { TableColumn } from '@nuxt/ui'
+import type { TableColumn } from '@nuxt/ui';
+import type { Business } from '~/shared/utils/schema'; // Added import for Business type
+
 
 const route = useRoute();
 const id = route.params.id as string;
 
-const mode = ref('food-beverage')
+// const mode = ref('food-beverage') // Will be replaced by a computed property
+
+// --- BEGIN: Added for category to mode mapping ---
+const categoryToModeMap: Record<string, string> = {
+  'Cafe': 'food-beverage',
+  'Restaurant': 'food-beverage',
+  'Takeaway': 'food-beverage',
+  'Bar': 'food-beverage',
+  'Bakery': 'food-beverage',
+  // 'Other' will default to 'food-beverage' as per the logic below
+};
+
+const { data: business } = await useFetch<Business>(`/api/businesses/${id}`); // Assuming Business type includes category
+
+const mode = computed(() => {
+  const bCategory = business.value?.category;
+  if (bCategory && categoryToModeMap[bCategory]) {
+    return categoryToModeMap[bCategory];
+  }
+  return 'food-beverage'; // Default mode
+});
+// --- END: Added for category to mode mapping ---
 
 // Definition of check weights by business mode (out of 100 total points)
 const modeCheckWeights: Record<string, Record<string, number>> = {
@@ -62,7 +85,7 @@ const checkWeights = computed(() => {
   return modeCheckWeights[mode.value] || modeCheckWeights['food-beverage'];
 });
 
-const { data: business } = await useFetch<Business>(`/api/businesses/${id}`);
+// const { data: business } = await useFetch<Business>(`/api/businesses/${id}`); // Moved up
 
 const resultSchema = z.discriminatedUnion('type', [
   z.object({
@@ -971,7 +994,13 @@ const print = () => {
         </div>
         
         <BusinessChannels :business="business" class="mt-4">
-          <UBadge color="neutral" variant="subtle" class="text-sm" leading-icon="i-lucide-coffee">Café</UBadge>
+          <UBadge v-if="business?.category" color="neutral" variant="subtle" class="text-sm" leading-icon="i-lucide-coffee">
+            {{ business.category }}
+          </UBadge>
+          <!-- Optional: Add a fallback badge or text if category is not present -->
+          <UBadge v-else color="neutral" variant="subtle" class="text-sm" leading-icon="i-lucide-help-circle">
+            Category N/A
+          </UBadge>
         </BusinessChannels>
       </UCard>
 
