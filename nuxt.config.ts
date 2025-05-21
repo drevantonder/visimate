@@ -26,6 +26,10 @@ export default defineNuxtConfig({
     googleApiKey: process.env.NUXT_GOOGLE_API_KEY,
     googleProgrammableSearchEngineId: process.env.NUXT_GOOGLE_PROGRAMMABLE_SEARCH_ENGINE_ID,
     dbPath: process.env.NUXT_DB_PATH,
+    rateLimit: {
+      requests: 5, // Max requests
+      interval: 10,  // Interval in seconds
+    },
     public: {
       googleApiKey: process.env.NUXT_PUBLIC_GOOGLE_API_KEY,
     }
