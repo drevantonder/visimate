@@ -1,5 +1,4 @@
-import { defineEventHandler, readValidatedBody } from 'h3';
-import { eq } from 'drizzle-orm';
+import { createUpdateSchema } from 'drizzle-zod';
 
 export default defineEventHandler(async (event) => {
   const id = event.context.params?.id;
@@ -11,11 +10,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: 'Invalid business ID' });
   }
 
-  // For updates, it's common to want all fields to be optional.
-  // businessInsertSchema might enforce required fields if not careful.
-  // Consider using .partial() for the update schema.
-  const updateSchema = businessInsertSchema.partial();
-  const body = await readValidatedBody(event, updateSchema.parse);
+  const body = await readValidatedBody(event, createUpdateSchema(tables.businesses).parse);
 
   if (Object.keys(body).length === 0) {
     throw createError({ statusCode: 400, statusMessage: 'No update data provided' });
